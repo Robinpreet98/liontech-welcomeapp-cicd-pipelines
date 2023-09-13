@@ -1,0 +1,48 @@
+pipeline{
+    agent any
+    tools {
+        maven "maven3.9.4"
+    }
+    stages{
+        stage('checkoutfromsourcecode')
+        {
+            steps{
+                sh "echo 'today is june 17 building pipelines for welcome app'"
+                git 'https://github.com/Robinpreet98/liontech-welcomeapp-cicd-pipelines.git'
+            }
+        }
+
+        stage('test+package+build'){
+            steps{
+
+            sh "echo 'maven being used as our build'"
+            sh "echo 'lointechengineers on the move'"
+            sh "mvn install"
+            sh "mvn test"
+            sh "mvn validate"
+            sh "mvn clean package"
+            }
+        }
+        stage('codequalityanalysis')
+        {
+            steps{
+                sh "echo 'running continous feedback and testing'"
+                sh "mvn sonar:sonar"
+            }
+        }
+        stage ('upload artifact to nexus')
+        {
+            steps{
+                sh "echo 'upload build artifact into nexus'"
+                sh "mvn deploy"
+            }
+        }
+        stage('deploy to test environment')
+        {
+            steps{
+                deploy adapters: [tomcat4(credentialsId: 'tomcat', path: '', url: 'http://3.99.137.139:8009/')], contextPath: 'liontech', war: 'target/*.war'
+            }
+        }
+
+    }
+}
