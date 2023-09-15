@@ -40,7 +40,7 @@ pipeline{
         stage('deploy to test environment')
         {
             steps{
-                deploy adapters: [tomcat4(credentialsId: 'tomcat', path: '', url: 'http://3.99.137.139:8009/')], contextPath: 'liontech', war: 'target/*.war'
+                sh "echo 'deploy into tomcat'"
             }
         }
 
