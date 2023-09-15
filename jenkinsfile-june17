@@ -1,59 +1,43 @@
-pipeline{
-    agent any
-    tools {
-        maven "maven3.9.4"
-    }
-    stages{
-        stage('checkoutfromsourcecode')
+node{
+    def mavenHome = tool name: 'maven3.9.4'
+    
+        stage('1-clone the code')
         {
-            steps{
                 sh "echo 'today is june 17 building pipelines for welcome app'"
-                git 'https://github.com/Robinpreet98/liontech-welcomeapp-cicd-pipelines.git'
-            }
+               git 'https://github.com/Robinpreet98/liontech-welcomeapp-cicd-pipelines.git'
         }
 
-        stage('test+package+build'){
-            steps{
-
-            sh "echo 'maven being used as our build'"
-            sh "echo 'lointechengineers on the move'"
-            sh "mvn install"
-            sh "mvn test"
-            sh "mvn validate"
-            sh "mvn clean package"
-            }
+        stage('2-build and test'){    
+            sh "${mavenHome}/bin/mvn clean package"
         }
+
         stage('codequalityanalysis')
         {
-            steps{
-                sh "echo 'running continous feedback and testing'"
-                sh "mvn sonar:sonar"
-            }
+            sh "${mavenHome}/bin/mvn sonar:sonar"
         }
         stage ('upload artifact to nexus')
         {
-            steps{
-                sh "echo 'upload build artifact into nexus'"
-                sh "mvn deploy"
-            }
+            sh "echo 'upload build artifact into nexus'"
+            sh "${mavenHome}/bin/mvn deploy"
         }
         stage('deploy to test environment')
-        {
-            steps{
-                sh "echo 'deploy into tomcat'"
-                deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'dev', war: 'target/*.war'
-            }
+        {  
+            sh "echo 'deploy into tomcat'"
+            deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'dev', war: 'target/*.war'
+            
         }
-        stage('approvalgate'){
+        stage('approvalgate')
+        {
             sh "echo 'please contact manager for approval'"
             timeout(time:5, unit: 'DAYS'){
                 input message: 'approve application ready for deployment to dev'
             }
-        }
+        }        
         stage('deploy to staging'){
             deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'staging environment', war: 'target/*.war'
         }
-        stage('approvalgate'){
+        stage('approvalgate')
+        {
             sh "echo 'please contact manager for approval'"
             timeout(time:10, unit: 'DAYS'){
                 input message: 'approve application ready for deployment to dev'
@@ -62,5 +46,5 @@ pipeline{
         stage('deploy to prod'){
             deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'staging environment', war: 'target/*.war'
         }
-    }
+    
 }
