@@ -41,8 +41,26 @@ pipeline{
         {
             steps{
                 sh "echo 'deploy into tomcat'"
+                deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'dev', war: 'target/*.war'
             }
         }
-
+        stage('approvalgate'){
+            sh "echo 'please contact manager for approval'"
+            timeout(time:5, unit: 'DAYS'){
+                input message: 'approve application ready for deployment to dev'
+            }
+        }
+        stage('deploy to staging'){
+            deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'staging environment', war: 'target/*.war'
+        }
+        stage('approvalgate'){
+            sh "echo 'please contact manager for approval'"
+            timeout(time:10, unit: 'DAYS'){
+                input message: 'approve application ready for deployment to dev'
+            }
+        }
+        stage('deploy to prod'){
+            deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://35.183.27.151:8009/')], contextPath: 'staging environment', war: 'target/*.war'
+        }
     }
 }
